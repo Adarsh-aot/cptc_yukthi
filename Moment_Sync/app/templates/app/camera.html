@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camera</title>
+    <!-- Include Tailwind CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        #video, #canvas {
+            width: 50%;
+            height: auto;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 h-screen flex flex-col justify-center items-center">
+    <div class="max-w-lg flex flex-col items-center">
+        <h2 class="text-2xl font-bold mb-4">Take a Picture</h2>
+        <div class="flex justify-center w-full mb-4">
+            <!-- Video element for displaying camera feed -->
+            <video id="video" autoplay class="mr-2"></video>
+            <!-- Canvas element for rendering the captured image -->
+            <canvas id="canvas"></canvas>
+        </div>
+        <!-- Snap Photo button -->
+        <button id="snap" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded mb-4">Snap Photo</button>
+        <!-- Form for submitting the captured image data -->
+        <form id="uploadForm" action="{% url 'upload_p' %}" method="post" class="w-full">
+            {% csrf_token %}
+            <!-- Hidden input field for storing the captured image data -->
+            <input type="hidden" id="imageData" name="image_data">
+            <!-- Input field for entering a title for the image -->
+            <input type="text" id="title" name="title" placeholder="Title" required class="border border-gray-300 rounded-md py-2 px-4 w-full mb-4">
+            <!-- Button for submitting the form -->
+            <button type="submit" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded w-full">Upload</button>
+            <a href="{% url 'home'  %}" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded w-full">Home</a>
+        </form>
+    </div>
+
+    <!-- JavaScript code for accessing the camera and capturing snapshots -->
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const snapButton = document.getElementById('snap');
+        const imageDataInput = document.getElementById('imageData');
+
+        // Access the user's camera
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(function(stream) {
+                video.srcObject = stream;
+            })
+            .catch(function(err) {
+                console.error('Error accessing camera: ', err);
+            });
+
+        // Take a snapshot when snapButton is clicked
+        snapButton.addEventListener('click', function() {
+            const context = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const imageDataURL = canvas.toDataURL('image/jpeg');
+            imageDataInput.value = imageDataURL;
+        });
+    </script>
+</body>
+</html>

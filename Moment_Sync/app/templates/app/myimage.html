@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Verified Images</title>
+    <!-- Include Tailwind CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        /* Set fixed width and height for images */
+        .image-container {
+            display: inline-block;
+            margin-right: 20px; /* Adjust margin between images */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .image-container img {
+            width: 300px;
+            height: 300px;
+            object-fit: cover; /* Ensure images cover the container */
+        }
+
+        .details {
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 6px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Adjust margin and padding for the page */
+        body {
+            padding: 20px;
+            margin: 0;
+        }
+        
+        /* Style for buttons */
+        .btn-download, .btn-delete {
+            display: block;
+            margin-top: 10px;
+            padding: 8px 16px;
+            background-color: #3B82F6;
+            color: #fff;
+            border-radius: 6px;
+            text-decoration: none;
+            text-align: center;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-download:hover, .btn-delete:hover {
+            background-color: #2563EB;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto py-8">
+        <h1 class="text-3xl font-bold mb-8">My Image</h1>
+        <div class="flex flex-wrap">
+            {% for image_name in p %}
+            <div class="mb-6 mr-6">
+                <div class="details">
+                    <h2 class="text-xl font-semibold mb-2">{{ image_name.title }}</h2>
+                    <p class="text-gray-500 mb-2">{{ image_name.date }}</p>
+                    <div class="image-container">
+                        <img src="{{ image_name.image.url }}" alt="Image">
+                    </div>
+                    
+                    <a href="{% url 'delete_picc' image_name.id  %}" class="btn-delete">Delete</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+    </div>
+</body>
+</html>

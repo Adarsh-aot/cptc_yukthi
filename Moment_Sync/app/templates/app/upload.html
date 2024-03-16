@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Image Upload</title>
+    <!-- Include Tailwind CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        /* Set background image */
+        body {
+            background-image: url('https://img.freepik.com/premium-psd/facebook-twitter-timeline-cover-collage-grid-photo-effect-mockup_206192-66.jpg');
+            background-size: cover;
+            background-position: center;
+            height: 100vh; /* Set full height */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="w-96 p-8 bg-white bg-opacity-80 rounded-lg shadow-lg">
+        <h2 class="text-3xl font-bold mb-4">Upload an Image</h2>
+    <form action="{% url 'upload_image' %}" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="file" name="images" accept="image/*" multiple required>
+        <input type="text" name="title" placeholder="Title" required>
+        <button type="submit">Upload</button>
+    </form>
+    </div>
+</body>
+</html>

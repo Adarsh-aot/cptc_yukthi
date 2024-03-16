@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload File</title>
+    <!-- Include Tailwind CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 2s linear infinite;
+            display: none; /* Hide loader by default */
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex justify-center items-center h-screen">
+    <div class="max-w-md bg-white p-6 rounded-md shadow-md">
+        <h2 class="text-2xl font-bold mb-4">Upload a File</h2>
+        <form id="uploadForm" action="{% url 'upload_file' %}" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="file" name="file" accept=".jpg, .jpeg, .png, .gif" required class="border border-gray-300 rounded-md px-4 py-2 mb-4">
+            <button id="uploadButton" type="submit" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">Upload</button>
+            <div id="loader" class="loader mx-2"></div> <!-- Loader element -->
+            <a href="{% url 'home'  %}" class="inline-block px-6 py-3 bg-green-500 text-white rounded-md hover:bg-green-600 ml-4">Home</a>
+        </form>
+    </div>
+
+    <script>
+        // Get the form and loader elements
+        const form = document.getElementById('uploadForm');
+        const loader = document.getElementById('loader');
+
+        // Add event listener for form submission
+        form.addEventListener('submit', function(event) {
+            // Show the loader when the form is submitted
+            loader.style.display = 'inline-block';
+            // Disable the upload button to prevent multiple submissions
+            document.getElementById('uploadButton').disabled = true;
+        });
+    </script>
+</body>
+</html>

@@ -43,6 +43,11 @@ urlpatterns = [
     path('uploadfile/', views.upload_file, name='upload_file'),
     path('downloadfile/', views.download_file, name='download_file'),
     path('query/', views.query, name='query'),
+    path('q/', views.predict, name='predict'),
+    path('delay/', views.delay, name='delay'),
+    
+    
+    
     # path('api_request/', views.api_request, name='api_request'),
     
     

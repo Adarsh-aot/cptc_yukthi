@@ -11,6 +11,45 @@
             width: 50%;
             height: auto;
         }
+        body{
+            background-image: linear-gradient(90deg, transparent 0%, transparent 10%, #EA858A 10%, #EA858A calc(10% + 3px), transparent calc(10% + 3px), transparent 100%), linear-gradient(180deg, white 10%, transparent 10%), repeating-linear-gradient(180deg, #91C1E1 0px, #91C1E1 2px, transparent 2px, transparent 38px), linear-gradient(white,white);
+        }
+        /* Style for the modal window */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+        /* Style for the modal content */
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 400px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        /* Style for the close button */
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body class="bg-gray-100 h-screen flex flex-col justify-center items-center">
@@ -24,17 +63,33 @@
         </div>
         <!-- Snap Photo button -->
         <button id="snap" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded mb-4">Snap Photo</button>
+        <!-- Button to open filter options modal -->
+        <button id="openModal" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded mb-4">Choose Filter</button>
         <!-- Form for submitting the captured image data -->
         <form id="uploadForm" action="{% url 'upload_p' %}" method="post" class="w-full">
             {% csrf_token %}
             <!-- Hidden input field for storing the captured image data -->
             <input type="hidden" id="imageData" name="image_data">
             <!-- Input field for entering a title for the image -->
-            <input type="text" id="title" name="title" placeholder="Title" required class="border border-gray-300 rounded-md py-2 px-4 w-full mb-4">
+            <input type="text" id="title" name="title" placeholder="Title" required class="border border-red-300 rounded-md py-2 px-4 w-full mb-4">
             <!-- Button for submitting the form -->
-            <button type="submit" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded w-full">Upload</button>
-            <a href="{% url 'home'  %}" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded w-full">Home</a>
+            <button type="submit" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded w-full mb-4">Upload</button>
         </form>
+        <!-- Home button -->
+        <a href="{% url 'home'  %}" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded w-full text-center">Home</a>
+    </div>
+
+    <!-- Modal for filter options -->
+    <div id="myModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 class="text-2xl font-bold mb-4">Choose Filter</h2>
+            <!-- Filter buttons -->
+            <button id="originalFilter" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded mb-4">Original</button>
+            <button id="blackWhiteFilter" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded mb-4">Black & White</button>
+            <button id="blurredFilter" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded mb-4">Blurred</button>
+            <button id="colorizeFilter" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded mb-4">Colorize</button>
+        </div>
     </div>
 
     <!-- JavaScript code for accessing the camera and capturing snapshots -->
@@ -42,8 +97,17 @@
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
         const snapButton = document.getElementById('snap');
+        const openModalButton = document.getElementById('openModal');
+        const modal = document.getElementById('myModal');
+        const closeBtn = document.getElementsByClassName('close')[0];
         const imageDataInput = document.getElementById('imageData');
-
+        const chooseFilterButton = document.getElementById('openModal');
+        const decreaseContrastButton = document.getElementById('decreaseContrast');
+        const uploadForm = document.getElementById('uploadForm'); // Updated to target the form element
+        
+        // Flag to track the current effect mode
+        let effectMode = 'Original';
+        
         // Access the user's camera
         navigator.mediaDevices.getUserMedia({ video: true })
             .then(function(stream) {
@@ -52,15 +116,120 @@
             .catch(function(err) {
                 console.error('Error accessing camera: ', err);
             });
-
-        // Take a snapshot when snapButton is clicked
-        snapButton.addEventListener('click', function() {
+        
+        // Function to capture snapshot and apply effects
+        function captureSnapshot() {
             const context = canvas.getContext('2d');
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+            // Apply effect based on the current effect mode
+            if (effectMode === 'Black & White') {
+                const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                for (let i = 0; i < imageData.data.length; i += 4) {
+                    const avg = (imageData.data[i] + imageData.data[i + 1] + imageData.data[i + 2]) / 3;
+                    imageData.data[i] = avg; // Red
+                    imageData.data[i + 1] = avg; // Green
+                    imageData.data[i + 2] = avg; // Blue
+                }
+                context.putImageData(imageData, 0, 0);
+            } else if (effectMode === 'Blurred') {
+                context.filter = 'blur(5px)';
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                context.filter = 'none';
+            }
+        
+            // Get the data URL of the modified image
             const imageDataURL = canvas.toDataURL('image/jpeg');
             imageDataInput.value = imageDataURL;
+        
+            // Update text content of the chooseFilterButton
+            chooseFilterButton.textContent = `Choose Filter: ${effectMode}`;
+        }
+        
+        // Take a snapshot when snapButton is clicked
+        snapButton.addEventListener('click', captureSnapshot);
+        
+        // Open modal when openModalButton is clicked
+        openModalButton.addEventListener('click', function() {
+            modal.style.display = 'block';
+        });
+        
+        // Close modal when close button is clicked
+        closeBtn.addEventListener('click', function() {
+            modal.style.display = 'none';
+        });
+        
+        // Close modal when clicking outside the modal
+        window.addEventListener('click', function(event) {
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        });
+        
+        // Set effect mode when filter buttons in modal are clicked
+        document.getElementById('originalFilter').addEventListener('click', function() {
+            effectMode = 'Original';
+            modal.style.display = 'none';
+        });
+        
+        document.getElementById('blackWhiteFilter').addEventListener('click', function() {
+            effectMode = 'Black & White';
+            modal.style.display = 'none';
+        });
+        
+        document.getElementById('blurredFilter').addEventListener('click', function() {
+            effectMode = 'Blurred';
+            modal.style.display = 'none';
+        });
+    
+        // Colorize Filter
+        function colorizeFilter(red, green, blue) {
+            const context = canvas.getContext('2d');
+            const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+            for (let i = 0; i < imageData.data.length; i += 4) {
+                // Apply color tint
+                imageData.data[i] += red; // Red
+                imageData.data[i + 1] += green; // Green
+                imageData.data[i + 2] += blue; // Blue
+            }
+            context.putImageData(imageData, 0, 0);
+        }
+        
+        // Set effect mode and apply colorize filter when colorize button is clicked
+        document.getElementById('colorizeFilter').addEventListener('click', function() {
+            const red = 0; // Adjust red tint value (0 to 255)
+            const green = 0; // Adjust green tint value (0 to 255)
+            const blue = 255; // Adjust blue tint value (0 to 255)
+            colorizeFilter(red, green, blue); // Apply colorize filter
+            effectMode = 'Colorize'; // Update effect mode
+            modal.style.display = 'none'; // Close modal
+        });
+        
+        // Decrease contrast function
+        decreaseContrastButton.addEventListener('click', function() {
+            const context = canvas.getContext('2d');
+            const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+            for (let i = 0; i < imageData.data.length; i += 4) {
+                imageData.data[i] += (imageData.data[i] * -0.1); // Red
+                imageData.data[i + 1] += (imageData.data[i + 1] * -0.1); // Green
+                imageData.data[i + 2] += (imageData.data[i + 2] * -0.1); // Blue
+            }
+            context.putImageData(imageData, 0, 0);
+        });
+        
+        // Save colorized image when upload button is clicked
+        uploadForm.addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent default form submission
+            const imageDataURL = canvas.toDataURL('image/jpeg'); // Get data URL of the canvas image
+            const title = document.getElementById('title').value; // Get title from input field
+            // You can now send this imageDataURL and title to your server using AJAX or fetch
+            // For demonstration, I'm logging them to the console
+            console.log('Title:', title);
+            console.log('Colorized image data:', imageDataURL);
+            // Reset the form after submission
+            this.reset();
         });
     </script>
 </body>

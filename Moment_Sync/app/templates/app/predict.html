@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predict</title>
+</head>
+<body>
+    <h2>Upload an Image and Choose a Version</h2>
+    <form action="{% url 'predict' %}" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="file" name="file" accept=".jpg, .jpeg, .png" required>
+        <select name="version">
+            <option value="Simple Lines">Simple Lines</option>
+            <option value="Complex Lines">Complex Lines</option>
+        </select>
+        <button type="submit">Predict</button>
+    </form>
+</body>
+</html>

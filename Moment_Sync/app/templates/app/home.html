@@ -6,26 +6,45 @@
     <title>Home</title>
     <!-- Include Tailwind CSS -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-image: url('https://content-management-files.canva.com/cdn-cgi/image/f=auto,q=70/52f9430b-bccc-40c4-b0c0-8b2348e57c2a/header_photo-collage2.jpg');
+            background-size: cover;
+            background-position: center;
+        }
+        .link-btn {
+            margin: 5px;
+        }
+    </style>
 </head>
-<body class="flex items-center justify-center h-screen" style="background-image: url('https://content-management-files.canva.com/cdn-cgi/image/f=auto,q=70/52f9430b-bccc-40c4-b0c0-8b2348e57c2a/header_photo-collage2.jpg'); background-size: cover; background-position: center;">
+<body class="flex items-center justify-center h-screen">
     <div class="bg-white bg-opacity-25 backdrop-filter backdrop-blur-md border border-gray-300 rounded-md p-4 text-center">
-        <h1 class="text-3xl font-bold mb-8">Welcome to the Home Page</h1>
-        {% if n == 1 %}
-        <a href="{% url 'f_man' %}" class="inline-block px-6 py-3 bg-red-500 text-white rounded-md hover:bg-red-600">Admin Delete</a>
-        {% endif %}
-        <!-- Upload Image Button -->
-        <a href="{% url 'upload_image' %}" class="inline-block px-6 py-3 bg-blue-500 text-white rounded-md hover:bg-blue-600">Upload Image</a>
-
-        <!-- Check Image Button -->
-        <a href="{% url 'check_image' %}" class="inline-block px-6 py-3 bg-green-500 text-white rounded-md hover:bg-green-600">My Photo</a>
-
-        <!-- My Upload Button -->
-        <a href="{% url 'camera' %}" class="inline-block px-6 py-3 bg-green-500 text-white rounded-md hover:bg-green-600">Camera</a>
-        <a href="{% url 'myimage' n %}" class="inline-block px-6 py-3 bg-green-500 text-white rounded-md hover:bg-green-600">My Upload</a>
-        <a href="{% url 'upload_file' %}" class="inline-block px-6 py-3 bg-green-500 text-white rounded-md hover:bg-green-600">Image To Txt</a>
-        <a href="{% url 'query' %}" class="inline-block px-6 py-3 bg-red-500 text-white rounded-md hover:bg-red-600">Image Query</a>
-        <a href="{% url 'register' %}" class="inline-block px-6 py-3 bg-red-500 text-white rounded-md hover:bg-red-600">Logout</a>
+        <h1 class="text-3xl font-bold mb-8">Welcome to Momentsync</h1>
     </div>
+</div>
+        
+        <div class="flex flex-wrap justify-center">
+            {% if n == 1 %}
+        <a href="{% url 'f_man' %}" class="inline-block px-6 py-3 bg-red-500 text-white rounded-md hover:bg-red-600 link-btn">Admin Delete</a>
+        {% endif %}
+            <!-- Row 1 -->
+            <div class="flex flex-wrap justify-center">
+                <!-- Upload Image Button -->
+                <a href="{% url 'upload_image' %}" class="inline-block px-6 py-3 bg-blue-500 text-white rounded-md hover:bg-blue-600 link-btn">Upload Image</a>
+                <!-- Check Image Button -->
+                <a href="{% url 'check_image' %}" class="inline-block px-6 py-3 bg-green-500 text-white rounded-md hover:bg-green-600 link-btn">My Photo</a>
+                <!-- My Upload Button -->
+                <a href="{% url 'camera' %}" class="inline-block px-6 py-3 bg-green-500 text-white rounded-md hover:bg-green-600 link-btn">Camera</a>
+            </div>
+            <!-- Row 2 -->
+            <div class="flex flex-wrap justify-center">
+                <a href="{% url 'myimage' n %}" class="inline-block px-6 py-3 bg-green-500 text-white rounded-md hover:bg-green-600 link-btn">My Upload</a>
+                <a href="{% url 'upload_file' %}" class="inline-block px-6 py-3 bg-green-500 text-white rounded-md hover:bg-green-600 link-btn">Image To Txt</a>
+                <a href="{% url 'query' %}" class="inline-block px-6 py-3 bg-red-500 text-white rounded-md hover:bg-red-600 link-btn">Image Query</a>
+                <a href="{% url 'predict' %}" class="inline-block px-6 py-3 bg-red-500 text-white rounded-md hover:bg-red-600 link-btn">Image Sketch</a>
+                <a href="{% url 'register' %}" class="inline-block px-6 py-3 bg-red-500 text-white rounded-md hover:bg-red-600 link-btn">Logout</a>
+            </div>
+        </div>
     </div>
 </body>
 </html>

@@ -2,7 +2,7 @@ from django.shortcuts import render
 
 # Create your views here.
 from django.shortcuts import render, redirect
-from .models import UploadedImage , Uploaded , UserProfile
+from .models import UploadedImage , Uploaded , UserProfile , imageimage
 from datetime import datetime
 # def upload_image(request):
 #     if request.method == 'POST':
@@ -34,18 +34,20 @@ def upload_image(request):
             UploadedImage.objects.create(title=title, date=date, image=image1, u_id=user_id)
 
         # Perform image verification and save verified images
-        
-        uploaded_image = UserProfile.objects.all()
-        for image in UploadedImage.objects.all():
-            for i in uploaded_image:
-                print(len(uploaded_image))
-                result = DeepFace.verify(img1_path=image.image.path, img2_path=i.profile_picture.path)
-                if result['verified'] and result['distance'] < 0.5:
-                    try:
-                        print(result['distance'])
-                        Uploaded.objects.create(title=image.title, date=image.date, image=image.image, k_id=i.user.id, un=str(image.id) + '_' + str(i.user.id))
-                    except Exception as e:      
-                        print(e)
+        try:
+            uploaded_image = UserProfile.objects.all()
+            for image in UploadedImage.objects.all():
+                for i in uploaded_image:
+                    print(len(uploaded_image))
+                    result = DeepFace.verify(img1_path=image.image.path, img2_path=i.profile_picture.path)
+                    if result['verified'] and result['distance'] < 0.5:
+                        try:
+                            print(result['distance'])
+                            Uploaded.objects.create(title=image.title, date=image.date, image=image.image, k_id=i.user.id, un=str(image.id) + '_' + str(i.user.id))
+                        except Exception as e:      
+                            print(e)
+        except Exception as e:
+            print(e)
 
         return redirect(verified_image, request.user.id)  # Redirect to verified image page
     return render(request, 'app/upload.html')
@@ -194,7 +196,7 @@ def loginn(request):
         if user is not None:
             login(request, user)
             # Redirect to success page or homepage
-            return redirect(home)
+            return redirect(delay) 
     return render ( request , 'app/login.html')
 
 from django.http import HttpResponse
@@ -447,45 +449,141 @@ def query(request):
     # Handle GET requests or other cases
     return render(request, 'app/query.html', {'output': ''})
 
-
-
-from django.shortcuts import render
-from django.http import HttpResponse
-from .models import Generator
-from PIL import Image
+import io
 import torch
+from PIL import Image
 import torchvision.transforms as transforms
+from django.http import HttpResponse
+from django.shortcuts import render
 
-# Load pre-trained models
+norm_layer = torch.nn.InstanceNorm2d
+
+class ResidualBlock(torch.nn.Module):
+    def __init__(self, in_features):
+        super(ResidualBlock, self).__init__()
+
+        conv_block = [torch.nn.ReflectionPad2d(1),
+                      torch.nn.Conv2d(in_features, in_features, 3),
+                      norm_layer(in_features),
+                      torch.nn.ReLU(inplace=True),
+                      torch.nn.ReflectionPad2d(1),
+                      torch.nn.Conv2d(in_features, in_features, 3),
+                      norm_layer(in_features)]
+
+        self.conv_block = torch.nn.Sequential(*conv_block)
+
+    def forward(self, x):
+        return x + self.conv_block(x)
+
+
+class Generator(torch.nn.Module):
+    def __init__(self, input_nc, output_nc, n_residual_blocks=9, sigmoid=True):
+        super(Generator, self).__init__()
+
+        # Initial convolution block
+        model0 = [torch.nn.ReflectionPad2d(3),
+                  torch.nn.Conv2d(input_nc, 64, 7),
+                  norm_layer(64),
+                  torch.nn.ReLU(inplace=True)]
+        self.model0 = torch.nn.Sequential(*model0)
+
+        # Downsampling
+        model1 = []
+        in_features = 64
+        out_features = in_features * 2
+        for _ in range(2):
+            model1 += [torch.nn.Conv2d(in_features, out_features, 3, stride=2, padding=1),
+                       norm_layer(out_features),
+                       torch.nn.ReLU(inplace=True)]
+            in_features = out_features
+            out_features = in_features * 2
+        self.model1 = torch.nn.Sequential(*model1)
+
+        model2 = []
+        # Residual blocks
+        for _ in range(n_residual_blocks):
+            model2 += [ResidualBlock(in_features)]
+        self.model2 = torch.nn.Sequential(*model2)
+
+        # Upsampling
+        model3 = []
+        out_features = in_features // 2
+        for _ in range(2):
+            model3 += [torch.nn.ConvTranspose2d(in_features, out_features, 3, stride=2, padding=1, output_padding=1),
+                       norm_layer(out_features),
+                       torch.nn.ReLU(inplace=True)]
+            in_features = out_features
+            out_features = in_features // 2
+        self.model3 = torch.nn.Sequential(*model3)
+
+        # Output layer
+        model4 = [torch.nn.ReflectionPad2d(3),
+                  torch.nn.Conv2d(64, output_nc, 7)]
+        if sigmoid:
+            model4 += [torch.nn.Sigmoid()]
+
+        self.model4 = torch.nn.Sequential(*model4)
+
+    def forward(self, x, cond=None):
+        out = self.model0(x)
+        out = self.model1(out)
+        out = self.model2(out)
+        out = self.model3(out)
+        out = self.model4(out)
+
+        return out
+
+# Load models
 model1 = Generator(3, 1, 3)
-model1.load_state_dict(torch.load('model.pth', map_location=torch.device('cpu')))
+model1.load_state_dict(torch.load(r'C:\Users\aotir\OneDrive\Documents\GitHub\cptc_yukthi\Moment_Sync\model.pth', map_location=torch.device('cpu')))
 model1.eval()
 
 model2 = Generator(3, 1, 3)
-model2.load_state_dict(torch.load('model2.pth', map_location=torch.device('cpu')))
+model2.load_state_dict(torch.load(r'C:\Users\aotir\OneDrive\Documents\GitHub\cptc_yukthi\Moment_Sync\model2.pth', map_location=torch.device('cpu')))
 model2.eval()
+
+from django.core.files.base import ContentFile
 
 def predict(request):
     if request.method == 'POST':
+        # Get input image and version from the request
         input_img = request.FILES['file']
         ver = request.POST.get('version')
-        
-        # Perform prediction
-        input_img = Image.open(input_img)
-        transform = transforms.Compose([transforms.Resize(256, Image.BICUBIC), transforms.ToTensor()])
-        input_img = transform(input_img)
-        input_img = torch.unsqueeze(input_img, 0)
 
-        drawing = None
+        # Load the input image
+        input_image = Image.open(input_img)
+
+        # Transform the input image
+        transform = transforms.Compose([transforms.Resize(256, Image.BICUBIC), transforms.ToTensor()])
+        input_image = transform(input_image)
+        input_image = torch.unsqueeze(input_image, 0)
+
+        # Perform prediction based on the selected version
         with torch.no_grad():
             if ver == 'Simple Lines':
-                drawing = model2(input_img)[0].detach()
+                drawing = model2(input_image)[0].detach()
             else:
-                drawing = model1(input_img)[0].detach()
-        
+                drawing = model1(input_image)[0].detach()
+
+        # Convert the output to a PIL image
         drawing = transforms.ToPILImage()(drawing)
-        drawing_path = 'path_to_save_generated_image.jpg'  # Set the path to save the generated image
-        drawing.save(drawing_path)  # Save the generated image
-        return render(request, 'app/result.html', {'drawing_path': drawing_path})
+
+        # Save the drawing image to the database
+        drawing_bytes = io.BytesIO()
+        drawing.save(drawing_bytes, format='PNG')
+        drawing_bytes = drawing_bytes.getvalue()
+
+        # Create a new ImageImage object and save the image data
+        drawing_instance = imageimage(image=ContentFile(drawing_bytes, name='drawing.png'))
+        drawing_instance.save()
+
+        # Return a response or redirect as needed
+        return render(request, 'app/l.html' , {'n' : drawing_instance})
     else:
-        return render(request, 'app/query.html')
+        # Handle GET requests (if necessary)
+        return render(request, 'app/q.html')
+    
+
+
+def delay(request):
+    return render ( request , 'app/delay.html')

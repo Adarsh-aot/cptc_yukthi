@@ -26,3 +26,6 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return self.user.username
+    
+class imageimage(models.Model):
+    image = models.ImageField(upload_to='file/') 
